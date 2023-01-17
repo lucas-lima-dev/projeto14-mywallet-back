@@ -46,10 +46,10 @@ const newWithdrawScheme = joi.object({
 app.get("/", async (req, res) => {
   const { email, password } = req.headers;
 
-  if (!email || password)
+  if (!email || !password)
     return res.status(422).send("All fields (email and password) are required");
 
-  const { error, value } = sign_InScheme.validade(
+  const { error, value } = sign_InScheme.validate(
     { email, password },
     { abortEarly: false }
   );
@@ -83,7 +83,7 @@ app.post("/cadastro", async (req, res) => {
       .status(422)
       .send("All fields (name, email and password) are required");
 
-  const { error, value } = sign_UpScheme.validade(
+  const { error, value } = sign_UpScheme.validate(
     { name, email, password },
     { abortEarly: false }
   );
@@ -142,7 +142,7 @@ app.post("/nova-entrada", async (req, res) => {
       .status(422)
       .send("All fields (value and description) are required");
 
-  const depositsValidation = newDepositScheme.validade(
+  const depositsValidation = newDepositScheme.validate(
     { value, description },
     { abortEarly: false }
   );
@@ -176,7 +176,7 @@ app.post("/nova-saida", async (req, res) => {
         .status(422)
         .send("All fields (value and description) are required");
   
-    const withdrawsValidation = newWithdrawScheme.validade(
+    const withdrawsValidation = newWithdrawScheme.validate(
       { value, description },
       { abortEarly: false }
     );
