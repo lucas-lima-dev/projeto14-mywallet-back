@@ -104,13 +104,13 @@ app.post("/cadastro", async (req, res) => {
       .collection("cadastro")
       .findOne({ name: newUser.name });
 
-    if (!nameInUse) return res.status(422).send("Name already registered");
+    if (nameInUse) return res.status(422).send("Name already registered");
 
     const emailInUse = await db
       .collection("cadastro")
       .findOne({ email: newUser.email });
 
-    if (!emailInUse) return res.status(422).send("E-mail already registered");
+    if (emailInUse) return res.status(422).send("E-mail already registered");
 
     await db.collection("cadastro").insertOne({ ...newUser });
 
