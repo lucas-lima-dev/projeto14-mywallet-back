@@ -1,0 +1,21 @@
+{
+  "name": "projeto14-mywallet-back",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node ./src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucas-lima-dev/projeto14-mywallet-back.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lucas-lima-dev/projeto14-mywallet-back/issues"
+  },
+  "homepage": "https://github.com/lucas-lima-dev/projeto14-mywallet-back#readme"
+}
