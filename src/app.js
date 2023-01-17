@@ -22,23 +22,23 @@ try {
   console.log(error.message);
 }
 
-sign_InScheme = joi.object({
-  email: joi.email().required(),
-  password: joi.password().required(),
+const sign_InScheme = joi.object({
+  email: joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+  password: joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required()
 });
 
-sign_UpScheme = joi.object({
+const sign_UpScheme = joi.object({
   name: joi.string().min(1).required(),
-  email: joi.email().required(),
-  password: joi.password().required(),
+  email: joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+  password: joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required()
 });
 
-newDepositScheme = joi.object({
+const newDepositScheme = joi.object({
   value: joi.number().positive().required(),
   description: joi.string().min(1).required(),
 });
 
-newWithdrawScheme = joi.object({
+const newWithdrawScheme = joi.object({
   value: joi.number().negative().required(),
   description: joi.string().min(1).required(),
 });
@@ -62,7 +62,7 @@ app.get("/", async (req, res) => {
   try {
     const userRegistered = await db
       .collection("cadastro")
-      .find({ email: value.email, password: value.password });
+      .findOne({ email: value.email, password: value.password });
 
     if (!userRegistered) {
       return res
@@ -102,13 +102,13 @@ app.post("/cadastro", async (req, res) => {
   try {
     const nameInUse = await db
       .collection("cadastro")
-      .findOne({ name: value.name });
+      .findOne({ name: newUser.name });
 
     if (!nameInUse) return res.status(422).send("Name already registered");
 
     const emailInUse = await db
       .collection("cadastro")
-      .findOne({ email: value.email });
+      .findOne({ email: newUser.email });
 
     if (!emailInUse) return res.status(422).send("E-mail already registered");
 
