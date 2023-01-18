@@ -3,6 +3,7 @@ import cors from "cors";
 import { MongoClient } from "mongodb";
 import joi from "joi";
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
 
 dotenv.config();
 
@@ -23,14 +24,15 @@ try {
 }
 
 const sign_InScheme = joi.object({
-  email: joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-  password: joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required()
+  email: joi.string().email().required(),
+  password: joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")).required(),
 });
 
 const sign_UpScheme = joi.object({
   name: joi.string().min(1).required(),
-  email: joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-  password: joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required()
+  email: joi.string().email().required(),
+  password: joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")).required(),
+  confirmPassword: joi.string().valid(joi.ref("password")).required(),
 });
 
 const newDepositScheme = joi.object({
@@ -43,8 +45,8 @@ const newWithdrawScheme = joi.object({
   description: joi.string().min(1).required(),
 });
 
-app.get("/", async (req, res) => {
-  const { email, password } = req.headers;
+app.post("/", async (req, res) => {
+  const { email, password } = req.body;
 
   if (!email || !password)
     return res.status(422).send("All fields (email and password) are required");
@@ -61,30 +63,38 @@ app.get("/", async (req, res) => {
 
   try {
     const userRegistered = await db
-      .collection("cadastro")
-      .findOne({ email: value.email, password: value.password });
+      .collection("users")
+      .findOne({ email: value.email });
 
-    if (!userRegistered) {
-      return res
+    const checkPassword = bcrypt.compareSync(
+      value.password,
+      userRegistered.password
+    );
+
+    if (userRegistered && checkPassword) {
+      return res.send("Sucess: Loged-In!");
+    } else
+      res
         .status(422)
         .send("User not registered or Invalid UserName or Invalid Password");
-    } else return res.send("Sucess: Loged-In!");
   } catch (error) {
     console.log(error.message);
     res.status(500).send("Deu algo errado no servidor");
   }
 });
 
-app.post("/cadastro", async (req, res) => {
-  const { name, email, password } = req.headers;
+app.post("/sign-up", async (req, res) => {
+  const { name, email, password, confirmPassword } = req.body;
 
-  if (!name || !email || !password)
+  if (!name || !email || !password || !confirmPassword)
     return res
       .status(422)
-      .send("All fields (name, email and password) are required");
+      .send(
+        "All fields (name, email, password and confirmPassword) are required"
+      );
 
   const { error, value } = sign_UpScheme.validate(
-    { name, email, password },
+    { name, email, password, confirmPassword },
     { abortEarly: false }
   );
 
@@ -93,28 +103,30 @@ app.post("/cadastro", async (req, res) => {
     return res.status(422).send(err);
   }
 
+  const hashPassword = bcrypt.hashSync(value.password, 10);
+
   let newUser = {
     name: value.name,
     email: value.email,
-    password: value.password,
+    password: hashPassword,
   };
 
   try {
     const nameInUse = await db
-      .collection("cadastro")
+      .collection("users")
       .findOne({ name: newUser.name });
 
     if (nameInUse) return res.status(422).send("Name already registered");
 
     const emailInUse = await db
-      .collection("cadastro")
+      .collection("users")
       .findOne({ email: newUser.email });
 
     if (emailInUse) return res.status(422).send("E-mail already registered");
 
-    await db.collection("cadastro").insertOne({ ...newUser });
+    await db.collection("users").insertOne({ ...newUser });
 
-    res.send("Sucesss: New User Registered!");
+    res.status(201).send("Sucesss: New User Registered!");
   } catch (error) {
     console.log(error.message);
     res.status(500).send("Deu algo errado no servidor");
@@ -153,15 +165,14 @@ app.post("/nova-entrada", async (req, res) => {
   }
 
   const newDeposit = {
-    value:depositsValidation.value,
-    description:depositsValidation.description
-  }
+    value: depositsValidation.value,
+    description: depositsValidation.description,
+  };
 
   try {
     await db.collection("nova-entrada").insertOne({ ...newDeposit });
 
-    res.send("Sucess: Deposit Registered!")
-
+    res.send("Sucess: Deposit Registered!");
   } catch (error) {
     console.log(error.message);
     res.status(500).send("Deu algo errado no servidor");
@@ -169,37 +180,36 @@ app.post("/nova-entrada", async (req, res) => {
 });
 
 app.post("/nova-saida", async (req, res) => {
-    const { value, description } = req.body;
-  
-    if (!value || !description)
-      return res
-        .status(422)
-        .send("All fields (value and description) are required");
-  
-    const withdrawsValidation = newWithdrawScheme.validate(
-      { value, description },
-      { abortEarly: false }
-    );
-  
-    if (withdrawsValidation.error) {
-      const err = withdrawsValidation.error.details.map((e) => e.message);
-      return res.status(422).send(err);
-    }
-  
-    const newWithdraw = {
-      value:withdrawsValidation.value,
-      description:withdrawsValidation.description
-    }
-  
-    try {
-      await db.collection("nova-entrada").insertOne({ ...newWithdraw });
-  
-      res.send("Sucess: Withdraw Registered!")
-  
-    } catch (error) {
-      console.log(error.message);
-      res.status(500).send("Deu algo errado no servidor");
-    }
-  });
+  const { value, description } = req.body;
+
+  if (!value || !description)
+    return res
+      .status(422)
+      .send("All fields (value and description) are required");
+
+  const withdrawsValidation = newWithdrawScheme.validate(
+    { value, description },
+    { abortEarly: false }
+  );
+
+  if (withdrawsValidation.error) {
+    const err = withdrawsValidation.error.details.map((e) => e.message);
+    return res.status(422).send(err);
+  }
+
+  const newWithdraw = {
+    value: withdrawsValidation.value,
+    description: withdrawsValidation.description,
+  };
+
+  try {
+    await db.collection("nova-entrada").insertOne({ ...newWithdraw });
+
+    res.send("Sucess: Withdraw Registered!");
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send("Deu algo errado no servidor");
+  }
+});
 
 app.listen(PORT, () => console.log("Servidor Rodou Suave"));
