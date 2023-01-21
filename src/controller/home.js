@@ -1,13 +1,13 @@
 import db from "../config/database.js";
 
 export default async function home(req, res) {
-  const { authorization } = req.headers;
-  const token = authorization?.replace("Bearer ", "");
+  // const { authorization } = req.headers;
+  // const token = authorization?.replace("Bearer ", "");
 
   try {
-    const checkSession = await db.collection("sessions").findOne({ token });
+    // const checkSession = await db.collection("sessions").findOne({ token });
 
-    if (!checkSession) return res.status().send();
+    // if (!checkSession) return res.status().send();
 
     const withdraws = await db.collection("withdraws").find().toArray();
 

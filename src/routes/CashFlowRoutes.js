@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { deposit,withdraw } from "../controller/cashflow.js";
+import { authValidation } from "../middleware/AuthMiddleware.js";
 
 const cashFlowRouter = Router()
 
-cashFlowRouter.post("/deposit",deposit)
-cashFlowRouter.post("/withdraw",withdraw)
+cashFlowRouter.post("/deposit",authValidation,deposit)
+cashFlowRouter.post("/withdraw",authValidation,withdraw)
 
 export default cashFlowRouter

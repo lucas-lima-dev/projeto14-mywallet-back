@@ -1,7 +1,9 @@
 import bcrypt from "bcrypt";
 import { v4 as uuidV4 } from "uuid";
 import db from "../config/database.js"
-import { sign_InSchema,sign_UpSchema } from "../Schema/AuthSchema.js";
+// import { sign_InSchema,sign_UpSchema } from "../Schema/AuthSchema.js";
+
+
 
 export async function signIn(req, res) {
   const { email, password } = req.body;
@@ -9,23 +11,23 @@ export async function signIn(req, res) {
   if (!email || !password)
     return res.status(422).send("All fields (email and password) are required");
 
-  const { error, value } = sign_InSchema.validate(
-    { email, password },
-    { abortEarly: false }
-  );
+  // const { error, value } = sign_InSchema.validate(
+  //   { email, password },
+  //   { abortEarly: false }
+  // );
 
-  if (error) {
-    const err = error.details.map((e) => e.message);
-    return res.status(422).send(err);
-  }
+  // if (error) {
+  //   const err = error.details.map((e) => e.message);
+  //   return res.status(422).send(err);
+  // }
 
   try {
     const userRegistered = await db
       .collection("users")
-      .findOne({ email: value.email });
+      .findOne({ email });
 
     const checkPassword = bcrypt.compareSync(
-      value.password,
+      password,
       userRegistered.password
     );
 
@@ -58,7 +60,7 @@ export async function signIn(req, res) {
 }
 
 export async function signUp(req, res) {
-  const { name, email, password, confirmPassword } = req.body;
+  const { name, email, password} = req.body;
 
   if (!name || !email || !password || !confirmPassword)
     return res
@@ -67,21 +69,21 @@ export async function signUp(req, res) {
         "All fields (name, email, password and confirmPassword) are required"
       );
 
-  const { error, value } = sign_UpSchema.validate(
-    { name, email, password, confirmPassword },
-    { abortEarly: false }
-  );
+  // const { error, value } = sign_UpSchema.validate(
+  //   { name, email, password, confirmPassword },
+  //   { abortEarly: false }
+  // );
 
-  if (error) {
-    const err = error.details.map((e) => e.message);
-    return res.status(422).send(err);
-  }
+  // if (error) {
+  //   const err = error.details.map((e) => e.message);
+  //   return res.status(422).send(err);
+  // }
 
-  const hashPassword = bcrypt.hashSync(value.password, 10);
+  const hashPassword = bcrypt.hashSync(password, 10);
 
   let newUser = {
-    name: value.name,
-    email: value.email,
+    name,
+    email,
     password: hashPassword,
   };
 
