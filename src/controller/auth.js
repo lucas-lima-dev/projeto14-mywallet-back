@@ -41,7 +41,7 @@ export async function signIn(req, res) {
         await db
           .collection("sessions")
           .updateOne({ idUser: userRegistered._id }, { $set: { token } });
-        return res.status(200).send(token);
+        return res.status(200).send({token,name:userRegistered.name});
       } else {
         await db
           .collection("sessions")
@@ -62,7 +62,7 @@ export async function signIn(req, res) {
 export async function signUp(req, res) {
   const { name, email, password} = req.body;
 
-  if (!name || !email || !password || !confirmPassword)
+  if (!name || !email || !password )
     return res
       .status(422)
       .send(
