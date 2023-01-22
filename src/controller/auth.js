@@ -1,8 +1,6 @@
 import bcrypt from "bcrypt";
 import { v4 as uuidV4 } from "uuid";
 import db from "../config/database.js"
-// import { sign_InSchema,sign_UpSchema } from "../Schema/AuthSchema.js";
-
 
 
 export async function signIn(req, res) {
@@ -11,15 +9,6 @@ export async function signIn(req, res) {
   if (!email || !password)
     return res.status(422).send("All fields (email and password) are required");
 
-  // const { error, value } = sign_InSchema.validate(
-  //   { email, password },
-  //   { abortEarly: false }
-  // );
-
-  // if (error) {
-  //   const err = error.details.map((e) => e.message);
-  //   return res.status(422).send(err);
-  // }
 
   try {
     const userRegistered = await db
@@ -46,7 +35,7 @@ export async function signIn(req, res) {
         await db
           .collection("sessions")
           .insertOne({ idUser: userRegistered._id, token });
-        return res.status(200).send(token);
+        return res.status(200).send({token,name:userRegistered.name});
       }
     } else {
       return res
@@ -54,7 +43,7 @@ export async function signIn(req, res) {
         .send("User not registered or Invalid UserName or Invalid Password");
     }
   } catch (error) {
-    console.log(error.message);
+    
     return res.status(500).send("Deu algo errado no servidor");
   }
 }
@@ -69,15 +58,6 @@ export async function signUp(req, res) {
         "All fields (name, email, password and confirmPassword) are required"
       );
 
-  // const { error, value } = sign_UpSchema.validate(
-  //   { name, email, password, confirmPassword },
-  //   { abortEarly: false }
-  // );
-
-  // if (error) {
-  //   const err = error.details.map((e) => e.message);
-  //   return res.status(422).send(err);
-  // }
 
   const hashPassword = bcrypt.hashSync(password, 10);
 
@@ -102,9 +82,9 @@ export async function signUp(req, res) {
 
     await db.collection("users").insertOne({ ...newUser });
 
-    return res.status(201).send("Sucesss: New User Registered!");
+    return res.status(201).send({ name: newUser.name });
   } catch (error) {
-    console.log(error.message);
+    
     return res.status(500).send("Deu algo errado no servidor");
   }
 }
