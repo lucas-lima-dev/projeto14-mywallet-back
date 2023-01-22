@@ -10,7 +10,7 @@ export default async function home(req, res) {
 
     // if (!checkSession) return res.status().send();
 
-    const wallet = await db.collection("wallet").find({id:checkSession._id}).toArray();
+    const wallet = await db.collection("wallet").find({idUser:checkSession.idUser}).toArray();
 
     
 

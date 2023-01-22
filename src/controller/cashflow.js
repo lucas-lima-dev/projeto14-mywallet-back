@@ -12,19 +12,21 @@ export async function wallet(req, res) {
       .send("All fields (value and description) are required");
 
   const checkSession = await db.collection("sessions").findOne({ token });
-
+  console.log(checkSession)
+  
   const cashFlow = {
     value,
     description,
     type,
     date: dayjs().format("DD/MM"),
-    idUser: checkSession._id,
+    idUser: checkSession.idUser,
   };
+  // console.log(cashFlow)
 
   try {
     await db.collection("wallet").insertOne({ ...cashFlow });
 
-    res.send("Sucess!");
+    res.send(cashFlow);
   } catch (error) {
     console.log(error.message);
     res.status(500).send("Deu algo errado no servidor");
