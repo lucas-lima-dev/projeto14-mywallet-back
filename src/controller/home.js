@@ -6,6 +6,7 @@ export default async function home(req, res) {
 
   try {
     const checkSession = await db.collection("sessions").findOne({ token });
+    console.log(checkSession)
 
     // if (!checkSession) return res.status().send();
 
